@@ -1,0 +1,91 @@
+import sys
+
+from PySide2.QtWidgets import *
+
+userID_list = ['admin']
+password_list = ['admin']
+
+
+class CgruLogin(QWidget):
+    def __init__(self):
+        super(CgruLogin, self).__init__()
+        self.grid_lay = QGridLayout()
+
+        self.login_label = QLabel('UserID')
+        self.login_lineEdit = QLineEdit()
+
+        self.password_label = QLabel('Password')
+        self.password_lineEdit = QLineEdit()
+        self.password_lineEdit.setEchoMode(self.password_lineEdit.Password)
+
+        self.grid_lay.addWidget(self.login_label, 0, 0)
+        self.grid_lay.addWidget(self.login_lineEdit, 0, 1)
+        self.grid_lay.addWidget(self.password_label, 1, 0)
+        self.grid_lay.addWidget(self.password_lineEdit, 1, 1)
+
+        self.setLayout(self.grid_lay)
+        self.setMinimumWidth(300)
+        self.setMinimumHeight(100)
+        self.setWindowTitle('CGRU WATCH LOGIN')
+
+        self.login_lineEdit.returnPressed.connect(self.checker)
+        self.password_lineEdit.returnPressed.connect(self.checker)
+
+    def checker(self):
+        if self.login_lineEdit.text() == '' and self.password_lineEdit.text() == '':
+            self.login_validator('cant be empty')
+            self.pasword_validator('cant be empty')
+
+        elif self.login_lineEdit.text() == '':
+            self.login_validator('cant be empty')
+
+        elif self.password_lineEdit.text() == '':
+            self.pasword_validator('cant be empty')
+
+        else:
+            if self.login_checker(self.login_lineEdit.text(), self.password_lineEdit.text()) == (True, True):
+                self.login_lineEdit.setStyleSheet('')
+                self.password_lineEdit.setStyleSheet('')
+                print ('Granted Access')
+            elif self.login_checker(self.login_lineEdit.text(), self.password_lineEdit.text()) == (False, True):
+                self.password_lineEdit.setStyleSheet('')
+                self.login_validator('loginID is wrong')
+            elif self.login_checker(self.login_lineEdit.text(), self.password_lineEdit.text()) == (True, False):
+                self.login_lineEdit.setStyleSheet('')
+                self.pasword_validator('password is wrong')
+            else:
+                self.login_validator('loginID is wrong')
+                self.pasword_validator('password is wrong')
+                print 'Access Denied'
+
+    def login_validator(self, text):
+        self.login_lineEdit.setStyleSheet('')
+        # self.login_lineEdit.setText(text)
+        self.login_lineEdit.setStyleSheet('background-color:red')
+
+
+    def pasword_validator(self, text):
+        self.password_lineEdit.setStyleSheet('')
+        # self.password_lineEdit.setText(text)
+        self.password_lineEdit.setStyleSheet('background-color:red')
+
+
+
+
+    def login_checker(self, loginid, password):
+
+        if self.login_lineEdit.text() in userID_list:
+            login_bool = True
+        else:
+            login_bool = False
+        if self.password_lineEdit.text() in password_list:
+            password_bool =True
+        else:
+            password_bool = False
+        return (login_bool,password_bool)
+
+
+app = QApplication(sys.argv)
+panel = CgruLogin()
+panel.show()
+sys.exit(app.exec_())
