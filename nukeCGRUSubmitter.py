@@ -1,7 +1,13 @@
 from PySide2.QtWidgets import *
-
-from nukeNodeInfo import *
 import nuke
+import sys
+import  os
+cgruPath = r'E:\Download\compressed_file\cgru.2.3.1.windows\cgru.2.3.1'
+sys.path.append(r'{}\afanasy\python'.format(cgruPath))
+sys.path.append(r'{}\lib\python'.format(cgruPath))
+os.environ['CGRU_LOCATION'] = cgruPath
+
+import af
 
 write_list = ['write1', 'write2', 'write3', 'write4']
 
@@ -17,7 +23,7 @@ class Panel(QWidget):
 
     def __init__(self):
         super(Panel, self).__init__()
-        self.nuke_lister = NukeNodeLister()
+        # self.nuke_lister = NukeNodeLister()
 
         self.master_layout = QVBoxLayout()
         self.hori_lay_buttons = QHBoxLayout()
@@ -65,13 +71,17 @@ class Panel(QWidget):
 
         self.setLayout(self.master_layout)
         self.setWindowTitle('CGRU_RENDER')
+        self.setMinimumWidth(300)
+        self.setMinimumHeight(350)
+
+        self.button2.clicked.connect(self.cancelButton)
+        self.button1.clicked.connect(self.submitOk)
 
     def select_writenodes(self, write_name,frameFirst, lastFrame):
         frames = '{}:{}'.format(frameFirst,lastFrame)
         check_box = QCheckBox(write_name)
 
-        line_edit_frames = QTextEdit()
-        line_edit_frames.setMaximumHeight(25)
+        line_edit_frames = QLineEdit()
         line_edit_frames.setText(frames)
 
         label_edit = QLabel('Frame_Range')
@@ -86,6 +96,8 @@ class Panel(QWidget):
         layout_vertical_write.addLayout(lay_h)
 
         self.master_layout.addLayout(layout_vertical_write)
+
+
 
     def all_nodes(self):
         nodes = nuke.allNodes()
@@ -109,9 +121,48 @@ class Panel(QWidget):
         return (self.write_name, self.write_firstframe, self.write_lastframe)
 
 
+    def nukeRootinfos(self):
+        self.root = nuke.root()['name'].value()
+        self.wn = os.path.basename(self.root)
+        self.jobname= self.wn.split('.')
+        self.jobname = self.jobname[0]
+        self.workDir = os.path.dirname(self.root)
+
+        return(self.jobname, self.workDir, self.wn)
+
+
+    def setJobs(self,writename,framefirst,framelast,framepertask):
+        job = af.Job(self.nukeRootinfos()[0])
+        job.setMaxRunningTasks(15)
+        block = af.Block('Nuke_Render', 'nuke')
+        block.setWorkingDirectory(self.nukeRootinfos()[1])
+        block.setCommand('nuke -i -X {} -x {} @#@,@#@'.format(writename, self.nukeRootinfos()[2]))
+        block.setFiles(['jpg/img.@####@.jpg'])
+        block.setNumeric(framefirst, framelast, framepertask)
+        job.blocks.append(block)
+        job.send()
+
+    def cancelButton(self):
+        self.close()
+
+    def submitOk(self):
+        nuke.scriptSave("")
+        for widget in self.children():
+            if isinstance(widget, QVBoxLayout):
+                print widget
+        # for chkbox in self.findChildren(QCheckBox):
+        #     if chkbox.isChecked() and chkbox.text() != 'Submit_Paused':
+        #         nf = self.get_node_info(nuke.toNode(chkbox.text()))
+        #         self.setJobs(nf[0],nf[1],nf[2],int(self.frames_per_task.currentText()))
+        # self.close()
+
+
+
 
 def run():
     # app = QApplication(sys.argv)
     run.panel = Panel()
     run.panel.show()
     # sys.exit(app.exec_())
+
+run()
