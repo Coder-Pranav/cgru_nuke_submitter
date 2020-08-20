@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 
 import nuke
@@ -9,9 +10,35 @@ sys.path.append(r'{}\afanasy\python'.format(cgruPath))
 sys.path.append(r'{}\lib\python'.format(cgruPath))
 os.environ['CGRU_LOCATION'] = cgruPath
 
-import af
 
-write_list = ['write1', 'write2', 'write3', 'write4']
+def removeModules():
+    """ Remove modules in memory incase cgru path is  changed in future"""
+    moduls = ['af', 'afcommon', 'cgruconfig', 'cgrupathmap', 'cgruutils', 'json', 'afnetwork', ]
+    for i in moduls:
+        try:
+            print 'Deleted ' + i
+            del sys.modules[i]
+        except:
+            print 'Not Deleted Module ' + i
+
+    if (sys.platform == "linux2"):
+        try:
+            shutil.rmtree(os.environ['HOME'] + '\\.cgru')
+        except:
+            print 'Not Deleted linux tree'
+    elif (sys.platform == "win32"):
+        try:
+            shutil.rmtree(os.environ['USERPROFILE'] + '\\AppData\\Roaming\\cgru')
+        except:
+            print 'Not Deleted App data tree'
+        try:
+            shutil.rmtree(os.environ['USERPROFILE'] + '\\.cgru')
+        except:
+            print 'Not Deleted cgru tree'
+
+
+removeModules()
+import af
 
 pools_list = ['None', 'Nuke']
 
@@ -160,7 +187,7 @@ class Panel(QWidget):
         job.setMaxRunningTasks(15)
         block = af.Block('Nuke_Render', 'nuke')
         block.setWorkingDirectory(self.nukeRootinfos()[1])
-        block.setCommand('nuke -i -X {} -x {} @#@,@#@'.format(writename, self.nukeRootinfos()[2]))
+        block.setCommand('nukeRender_11_3v3 -i -X {} -x {} @#@,@#@'.format(writename, self.nukeRootinfos()[2]))
         block.setFiles([seqname])
         block.setNumeric(framefirst, framelast, framepertask)
         job.blocks.append(block)
