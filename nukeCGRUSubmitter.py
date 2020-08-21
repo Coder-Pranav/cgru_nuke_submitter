@@ -50,8 +50,9 @@ frame_per_task_list = ['3', '4', '8', '10', '12', '16']
 class Panel(QWidget):
     write_nodes = []
 
-    def __init__(self):
+    def __init__(self, selection):
         super(Panel, self).__init__()
+        self.selection = selection
         self.master_layout = QVBoxLayout()
         self.loadWrite()  ### For nuke to find all Write nodes
         self.initUI()
@@ -129,8 +130,12 @@ class Panel(QWidget):
 
     def all_nodes(self):
         """Finding all write node in nodegraph"""
-        nodes = nuke.allNodes()
-        for node in nodes:
+        if self.selection == 'selected':
+            self.nodes = nuke.selectedNodes()
+        else:
+            self.nodes = nuke.allNodes()
+
+        for node in self.nodes:
             if node.Class() == 'Write' and node not in self.write_nodes:
                 if not node['disable'].value():
                     self.write_nodes.append(node)
@@ -187,7 +192,7 @@ class Panel(QWidget):
         job.setMaxRunningTasks(15)
         block = af.Block('Nuke_Render', 'nuke')
         block.setWorkingDirectory(self.nukeRootinfos()[1])
-        block.setCommand('nukeRender_11_3v3 -i -X {} -x {} @#@,@#@'.format(writename, self.nukeRootinfos()[2]))
+        block.setCommand('nuke -i -X {} -x {} @#@,@#@'.format(writename, self.nukeRootinfos()[2]))
         block.setFiles([seqname])
         block.setNumeric(framefirst, framelast, framepertask)
         job.blocks.append(block)
@@ -197,9 +202,16 @@ class Panel(QWidget):
 
 
 def run():
-    # app = QApplication(sys.argv)
-    run.panel = Panel()
+    """Shows all write nodes in the node graph"""
+    run.panel = Panel('full')
     run.panel.show()
-    # sys.exit(app.exec_())
+
+def run_selected():
+    """Shows only selected write nodes"""
+    run_selected.panel = Panel('selected')
+    if not run_selected.panel.write_nodes:
+        nuke.message('Atleast Select one Write Node')
+    else:
+        run_selected.panel.show()
 
 # run()
