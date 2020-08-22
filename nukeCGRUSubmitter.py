@@ -49,6 +49,7 @@ frame_per_task_list = ['3', '4', '8', '10', '12', '16']
 
 class Panel(QWidget):
     write_nodes = []
+    send = ''
 
     def __init__(self, selection):
         super(Panel, self).__init__()
@@ -183,7 +184,11 @@ class Panel(QWidget):
                 frameL = int(splitter[1])
                 self.nuke_sendJobs(pair_widget[0].text(), frameF, frameL, int(self.frames_per_task.currentText()),
                                    self.get_node_info(nuke.toNode(pair_widget[0].text()))[3])
-                self.close()
+        self.close()
+        if self.send:
+            nuke.message('Render Send Sucessfully')
+        else:
+            nuke.message('Unable To Send Render')
 
     def nuke_sendJobs(self, writename, framefirst, framelast, framepertask, seqname):
         """send jobs from nuke to cgru"""
@@ -198,7 +203,11 @@ class Panel(QWidget):
         job.blocks.append(block)
         if self.job_paused.isChecked():
             job.offline()
-        job.send()
+        if job.send()[0]:
+            self.send = True
+        else:
+            self.send = False
+
 
 
 def run():
